@@ -1,0 +1,40 @@
+#! /usr/bin/env python
+# -*- coding: utf-8 -*-
+# 
+# Copyright (c) 2011 Butiá Team butia@fing.edu.uy 
+# Butia is a free open plataform for robotics projects
+# www.fing.edu.uy/inco/proyectos/butia
+# Universidad de la República del Uruguay
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+
+import os
+
+mydir = os.path.dirname(os.path.abspath(__file__))
+if os.path.exists(os.path.join(mydir, "activity", "activity.info")):
+    # Running from git checkout
+    libdir = mydir
+    sharedir = mydir
+else:
+    # Running as installed package
+    TAPATH = '/usr/share/sugar/activities/TurtleBots.activity'
+    os.chdir(TAPATH)
+    import sys
+    sys.path.insert(0, TAPATH)
+    libdir = TAPATH
+    sharedir = TAPATH
+
+from TurtleArt import turtleblocks
+turtleblocks.TurtleMain(libdir, sharedir)
+
