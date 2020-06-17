@@ -20,8 +20,6 @@
 
 # A naive approach to running myfunc in a jail
 import traceback
-from time import *
-from math import *
 
 
 def myfunc(f, args):
@@ -30,8 +28,8 @@ def myfunc(f, args):
     params = ", ".join(['x', 'y', 'z'][:len(args)])
     myf = ''.join(['def f(', params, '): return ', f.replace('import', '')])
     userdefined = {}
-    exec myf in globals(), userdefined
-    return userdefined.values()[0](*args)
+    exec(myf, globals(), userdefined)
+    return list(userdefined.values())[0](*args)
 
 
 def myfunc_import(parent, f, args):
@@ -42,8 +40,8 @@ def myfunc_import(parent, f, args):
         base_class = parent.tw  # as of v107, we pass tw
     userdefined = {}
     try:
-        exec f in globals(), userdefined
+        exec(f, globals(), userdefined)
         return userdefined['myblock'](base_class, args)
-    except:
+    except BaseException:
         traceback.print_exc()
         return None

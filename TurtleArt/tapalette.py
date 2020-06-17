@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # Copyright (c) 2011-13 Walter Bender
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -84,11 +84,12 @@ block_styles = {'basic-style': [],
                 'portfolio-style-1x2': []}
 
 
-import gtk
+from gi.repository import Gtk
+from gi.repository import Gdk
 
 try:
-    from sugar.graphics import style
-    from util.helpbutton import (add_section, add_paragraph)
+    from sugar3.graphics import style
+    from .util.helpbutton import (add_section, add_paragraph)
     GRID_CELL_SIZE = style.GRID_CELL_SIZE
     HELP_PALETTE = True
 except ImportError:
@@ -112,19 +113,19 @@ class Palette():
         self._name = name
         self._special_name = _(name)
         self._colors = colors
-        self._max_text_width = int(gtk.gdk.screen_width() / 3) - 20
+        self._max_text_width = int(Gdk.Screen.width() / 3) - 20
 
         # Prepare a vbox for the help palette
-        if not self._name in help_palettes:
-            self._help_box = gtk.VBox()
+        if self._name not in help_palettes:
+            self._help_box = Gtk.VBox()
             self._help_box.set_homogeneous(False)
             help_palettes[self._name] = self._help_box
-            help_windows[self._name] = gtk.ScrolledWindow()
+            help_windows[self._name] = Gtk.ScrolledWindow()
             help_windows[self._name].set_size_request(
-                int(gtk.gdk.screen_width() / 3),
-                gtk.gdk.screen_height() - GRID_CELL_SIZE * 3)
+                int(Gdk.Screen.width() / 3),
+                Gdk.Screen.height() - GRID_CELL_SIZE * 3)
             help_windows[self._name].set_policy(
-                gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
+                Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
             help_windows[self._name].add_with_viewport(
                 help_palettes[self._name])
             help_palettes[self._name].show()
@@ -135,7 +136,7 @@ class Palette():
 
     def add_palette(self, position=None, init_on_start=False):
         if self._name is None:
-            print 'You must specify a name for your palette'
+            print('You must specify a name for your palette')
             return
 
         # Insert new palette just before the trash
@@ -156,7 +157,7 @@ class Palette():
             palette_blocks.insert(i, [])
             block_colors.insert(i, self._colors)
             if init_on_start:
-                if not self._name in palette_init_on_start:
+                if self._name not in palette_init_on_start:
                     palette_init_on_start.append(self._name)
         else:
             return
@@ -291,7 +292,7 @@ class _ProtoBlock():
 
     def add_block(self, position=None):
         if self._name is None:
-            print 'You must specify a name for your block'
+            print('You must specify a name for your block')
             return
 
         # FIXME: Does the block already exist? A block can live on
@@ -300,7 +301,7 @@ class _ProtoBlock():
         # all lists except palettes before regeneration.
 
         if self._style is None:
-            print 'You must specify a style for your block'
+            print('You must specify a style for your block')
             return
         else:
             block_styles[self._style].append(self._name)
@@ -320,8 +321,8 @@ class _ProtoBlock():
         if self._palette is not None:
             i = palette_names.index(self._palette)
             if self._name in palette_blocks[i]:
-                print '%s already in palette %s, skipping...' % \
-                    (self._name, self._palette)
+                print('%s already in palette %s, skipping...' %
+                      (self._name, self._palette))
             else:
                 if position is not None and isinstance(position, int) and \
                         position < len(palette_blocks[i]):
@@ -329,7 +330,7 @@ class _ProtoBlock():
                 else:
                     palette_blocks[i].append(self._name)
                     if position is not None:
-                        print 'Ignoring position (%s)' % (str(position))
+                        print('Ignoring position (%s)' % (str(position)))
 
         if self._help is not None:
             help_strings[self._name] = self._help
@@ -383,7 +384,7 @@ class _ProtoBlock():
 
     def set_palette(self, palette):
         if palette not in palette_names:
-            print 'Could not find palette %s' % (palette)
+            print('Could not find palette %s' % (palette))
         else:
             self._palette = palette
 
@@ -407,7 +408,7 @@ class _ProtoBlock():
 
     def set_style(self, style):
         if style not in block_styles:
-            print 'Unknown style: %s' % (style)
+            print('Unknown style: %s' % (style))
         else:
             self._style = style
 

@@ -112,6 +112,7 @@ from .tatype import (TYPE_BOOL, TYPE_BOX, TYPE_CHAR, TYPE_COLOR, TYPE_FLOAT,
                      TYPE_STRING, TYPE_VECTOR)
 from .taturtle import Turtle
 
+
 def _millisecond():
     ''' Current time in milliseconds '''
     return time() * 1000
@@ -557,23 +558,31 @@ pensize\nend\n')
         color_names = ('red', 'orange', 'yellow', 'green', 'cyan', 'blue',
                        'purple', 'white', 'black')
         # Need to make sure color names are included in the PO files
-        color_names_i18n = (_('red'), _('orange'), _('yellow'), _('green'),
-                            _('cyan'), _('blue'), _('purple'), _('white'),
-                            _('black'))
+        color_names_i18n = (_('red'), _('orange'), _('yellow'),  # noqa: F841
+                            _('green'), _('cyan'), _('blue'),
+                            _('purple'), _('white'), _('black'))
         for name in color_names:
             self._make_constant(palette, name, _(name), name)
-        
+
         palette.add_block('RGB to color',
-                        style='number-style-var-3arg',
-                        label=[_('RGB to\n\ncolor'), _('red'), _('green'), _('blue') ],
-                        default=[0, 0, 0],
-                        help_string=_('converter'),
-                        prim_name='converter')
-                        
+                          style='number-style-var-3arg',
+                          label=[_('RGB to\n\ncolor'), _(
+                              'red'), _('green'), _('blue')],
+                          default=[0, 0, 0],
+                          help_string=_('converter'),
+                          prim_name='converter')
+
         self.tw.lc.def_prim(
-            'converter', 3,
-            Primitive(self._rgb_converter, return_type=TYPE_FLOAT, arg_descs=[ArgSlot(TYPE_INT), ArgSlot(TYPE_INT), ArgSlot(TYPE_INT)]))
-        
+            'converter',
+            3,
+            Primitive(
+                self._rgb_converter,
+                return_type=TYPE_FLOAT,
+                arg_descs=[
+                    ArgSlot(TYPE_INT),
+                    ArgSlot(TYPE_INT),
+                    ArgSlot(TYPE_INT)]))
+
         # In order to map Turtle Art colors to the standard UCB Logo palette,
         # we need to define a somewhat complex set of functions.
         define_logo_function('tacolor', '\
@@ -1238,7 +1247,8 @@ variable'))
                           prim_name='returnstack',
                           logo_command='action',
                           default=_('action'),
-                          help_string=_('invokes named action stack and returns value'))
+                          help_string=_(
+                              'invokes named action stack and returns value'))
         self.tw.lc.def_prim('returnstack', 1,
                             primitive_dictionary['returnstack'], True)
 
@@ -1283,33 +1293,35 @@ variable'))
         if self.tw.lc.update_values:
             self.tw.lc.update_label_value(
                 'xcor',
-                self.tw.turtles.get_active_turtle().get_xy()[0] /
-                self.tw.coord_scale)
+                self.tw.turtles.get_active_turtle(
+                ).get_xy()[0] / self.tw.coord_scale)
             self.tw.lc.update_label_value(
                 'ycor',
-                self.tw.turtles.get_active_turtle().get_xy()[1] /
-                self.tw.coord_scale)
+                self.tw.turtles.get_active_turtle().get_xy(
+                )[1] / self.tw.coord_scale)
             self.tw.lc.update_label_value(
                 'heading',
-                self.tw.turtles.get_active_turtle().get_heading())
+                self.tw.turtles.get_active_turtle(
+                ).get_heading())
 
     def after_move(self, *ignored_args, **ignored_kwargs):
         ''' Update labels after moving the turtle '''
         if self.tw.lc.update_values:
             self.tw.lc.update_label_value(
                 'xcor',
-                self.tw.turtles.get_active_turtle().get_xy()[0] /
-                self.tw.coord_scale)
+                self.tw.turtles.get_active_turtle().get_xy(
+                )[0] / self.tw.coord_scale)
             self.tw.lc.update_label_value(
                 'ycor',
-                self.tw.turtles.get_active_turtle().get_xy()[1] /
-                self.tw.coord_scale)
+                self.tw.turtles.get_active_turtle().get_xy(
+                )[1] / self.tw.coord_scale)
 
     def after_right(self, *ignored_args):
         if self.tw.lc.update_values:
             self.tw.lc.update_label_value(
                 'heading',
-                self.tw.turtles.get_active_turtle().get_heading())
+                self.tw.turtles.get_active_turtle(
+                ).get_heading())
 
     def after_set(self, name, value=None):
         ''' Update the associated value blocks '''

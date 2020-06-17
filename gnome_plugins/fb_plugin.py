@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # Copyright (c) 2012 Raul Gutierrez S. - rgs@itevenworks.net
 # Copyright (c) 2013 Alan Aguiar alanjas@hotmail.com
@@ -32,14 +32,16 @@
 
 
 import pycurl
-import urlparse
+import urllib.parse
 
-import gtk
+from gi.repository import Gtk
+
 try:
-    import webkit
-    WEBKIT = True
-except ImportError:
-    WEBKIT = False
+    from gi.repository import WebKit
+    HAS_WEBKIT = True
+except BaseException:
+    pass
+    HAS_WEBKIT = False
 from .plugin import Plugin
 from TurtleArt.util.menubuilder import make_menu_item, make_sub_menu, MENUBAR
 from gettext import gettext as _
@@ -58,7 +60,7 @@ class FbUploader():
         c.setopt(c.URL, self._get_url())
         c.setopt(c.HTTPPOST, self._get_params(c))
         c.perform()
-        print c.getinfo(c.HTTP_CODE)
+        print(c.getinfo(c.HTTP_CODE))
 
     def _get_url(self):
         return self.UPLOAD_URL % (self._access_token)
@@ -83,7 +85,8 @@ class Fb_plugin(Plugin):
             menu, upload_menu = MENUBAR[_('Upload')]
         else:
             upload_menu = None
-            menu = gtk.Menu()
+            menu = Gtk.Menu()
+
         make_menu_item(menu, _('Facebook wall post'), self._post_menu_cb)
         if upload_menu is not None:
             return None  # We don't have to add it since it already exists
@@ -98,11 +101,6 @@ class Fb_plugin(Plugin):
         return True
 
     def _post_menu_cb(self, widget):
-        if not WEBKIT:
-            self.tw.showlabel('status',
-                              'install webkit: sudo yum install pywebkitgtk')
-            print('webkit not installed: sudo yum install pywebkitgtk')
-            return
 
         if self._access_token == "":
             self._grab_fb_app_token()
@@ -111,17 +109,17 @@ class Fb_plugin(Plugin):
         try:
             self._post_to_fb()
         except Exception as e:
-            print 'error while posting to Facebook:', e
+            print('error while posting to Facebook:', e)
 
     def _grab_fb_app_token(self):
         url = self._get_auth_url()
-        w = gtk.Window()
-        sw = gtk.ScrolledWindow()
-        sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+        w = Gtk.Window()
+        sw = Gtk.ScrolledWindow()
+        sw.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
         sw.show()
         w.move(200, 200)
         w.set_size_request(800, 400)
-        wkv = webkit.WebView()
+        wkv = WebKit.WebView()
         wkv.load_uri(url)
         wkv.grab_focus()
         wkv.connect('navigation-policy-decision-requested',
@@ -142,8 +140,8 @@ class Fb_plugin(Plugin):
     def _nav_policy_cb(self, view, frame, req, action, param):
         uri = req.get_uri()
         if uri:
-            url_o = urlparse.urlparse(uri)
-            params = urlparse.parse_qs(url_o.fragment)
+            url_o = urllib.parse.urlparse(uri)
+            params = urllib.parse.parse_qs(url_o.fragment)
             if 'access_token' in params:
                 self._access_token = params['access_token'][0]
                 self._auth_win.hide()

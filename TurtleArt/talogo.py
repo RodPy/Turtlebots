@@ -21,29 +21,28 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-import gtk
-import gobject
+import numbers
+import os
 import tempfile
+import urllib.error
+import urllib.parse
+import urllib.request
+from collections import UserDict
+from os.path import exists as os_path_exists
 from time import time, sleep
 
-from operator import isNumberType
-import os
-from os.path import exists as os_path_exists
-from UserDict import UserDict
-import urllib2
+from gi.repository import GLib
+from gi.repository import GdkPixbuf
+from sugar3.graphics import style
 
-try:
-    from sugar.graphics import style
-    GRID_CELL_SIZE = style.GRID_CELL_SIZE
-except ImportError:
-    GRID_CELL_SIZE = 55
+GRID_CELL_SIZE = style.GRID_CELL_SIZE
 
 USER_HOME = os.path.expanduser('~')
 
 import traceback
 
 from .tablock import (Block, Media, media_blocks_dictionary)
-from .taconstants import (TAB_LAYER, DEFAULT_SCALE, ICON_SIZE, Color)
+from .taconstants import (TAB_LAYER, DEFAULT_SCALE, ICON_SIZE)
 from .tajail import (myfunc, myfunc_import)
 from .tapalette import (block_names, value_blocks)
 from .tatype import (TATypeError, TYPES_NUMERIC)
@@ -54,7 +53,8 @@ from .tautils import (get_pixbuf_from_journal, data_from_file, get_stack_name,
                       get_load_name, chooser_dialog)
 
 try:
-    from util.RtfParser import RtfTextOnly
+    from .util.RtfParser import RtfTextOnly
+
     RTFPARSE = True
 except ImportError:
     RTFPARSE = False
@@ -66,7 +66,8 @@ primitive_dictionary = {}  # new block primitives get added here
 
 class noKeyError(UserDict):
 
-    __missing__ = lambda x, y: 0
+    def __missing__(x, y):
+        return 0
 
 
 class symbol:
@@ -94,7 +95,6 @@ class logoerror(Exception):
 
 
 class NegativeRootError(BaseException):
-
     """ Similar to the ZeroDivisionError, this error is raised at runtime
     when trying to computer the square root of a negative number. """
 
@@ -133,7 +133,7 @@ def _change_user_path(path):
         return None
     if len(path) < 7:
         return None
-    if not '/' in path[6:]:
+    if '/' not in path[6:]:
         return None
     if path[0:5] == '/home' and '/':
         i = path[6:].index('/')
@@ -155,7 +155,6 @@ def _millisecond():
 
 
 class LogoCode:
-
     """ A class for parsing Logo code """
 
     def __init__(self, tw):
@@ -203,8 +202,8 @@ class LogoCode:
         self._disable_help = False
 
         self.body_height = int((self.tw.canvas.height / 40) * self.tw.scale)
-
         self.scale = DEFAULT_SCALE
+        self.value_blocks_to_update = {}
 
     def stop_logo(self):
         """ Stop logo is called from the Stop button on the toolbar """
@@ -256,13 +255,13 @@ class LogoCode:
         """
         self._save_all_connections = []
         for b in blocks:
-             tmp = []
-             for c in b.connections:
-                 tmp.append(c)
-             self._save_all_connections.append(
-                 {'blk':b, 'connections':tmp})
+            tmp = []
+            for c in b.connections:
+                tmp.append(c)
+            self._save_all_connections.append(
+                {'blk': b, 'connections': tmp})
 
-        for k in self.stacks.keys():
+        for k in list(self.stacks.keys()):
             self.stacks[k] = None
         self.stacks['stack1'] = None
         self.stacks['stack2'] = None
@@ -404,7 +403,7 @@ class LogoCode:
                 (token, bindex) = token
             if isinstance(token, Media):
                 res.append(token)
-            elif isNumberType(token):
+            elif isinstance(token, numbers.Number):
                 res.append(token)
             elif token.isdigit():
                 res.append(float(token))
@@ -427,7 +426,7 @@ class LogoCode:
     def _start_eval(self, blklist):
         """ Step through the list. """
         if self.tw.running_sugar:
-            self.tw.activity.stop_turtle_button.set_icon("stopiton")
+            self.tw.activity.stop_turtle_button.set_icon_name("stopiton")
             self.tw.activity.stop_turtle_button.set_tooltip(
                 _('Stop turtle'))
         elif self.tw.interactive_mode:
@@ -437,11 +436,12 @@ class LogoCode:
         yield True
         if self.tw.running_sugar:
             if self.tw.step_time == 0 and self.tw.selected_blk is None:
-                self.tw.activity.stop_turtle_button.set_icon("hideshowon")
+                self.tw.activity.stop_turtle_button.set_icon_name("hideshowon")
                 self.tw.activity.stop_turtle_button.set_tooltip(
                     _('Show blocks'))
             else:
-                self.tw.activity.stop_turtle_button.set_icon("hideshowoff")
+                self.tw.activity.stop_turtle_button.set_icon_name(
+                    "hideshowoff")
                 self.tw.activity.stop_turtle_button.set_tooltip(
                     _('Hide blocks'))
         elif self.tw.interactive_mode:
@@ -590,7 +590,7 @@ class LogoCode:
                     need_to_pop_istack = True
                     result = None
                 else:
-                    result = (self.cfun.fcn, ) + tuple(self.arglist)
+                    result = (self.cfun.fcn,) + tuple(self.arglist)
         else:
             need_to_pop_istack = True
             if call_me:
@@ -625,7 +625,7 @@ class LogoCode:
                         return False
                     if self.tw.running_turtleart:
                         try:
-                            self.step.next()
+                            next(self.step)
                         except ValueError:
                             debug_output('generator already executing',
                                          self.tw.running_sugar)
@@ -636,8 +636,8 @@ class LogoCode:
                             # (self.cfun.name is only the name of the
                             # outermost block in this statement/ line of code)
                             # use logoerror("#notanumber") when possible
-                            if (tte.req_type in TYPES_NUMERIC and
-                                    tte.bad_type not in TYPES_NUMERIC):
+                            if tte.req_type in TYPES_NUMERIC and \
+                                    tte.bad_type not in TYPES_NUMERIC:
                                 raise logoerror("#notanumber")
                             else:
                                 raise logoerror(
@@ -652,7 +652,7 @@ class LogoCode:
                             raise logoerror("#emptyheap")
                     else:
                         try:
-                            self.step.next()
+                            next(self.step)
                         except BaseException as error:
                             if isinstance(error, (StopIteration,
                                                   logoerror)):
@@ -773,7 +773,7 @@ class LogoCode:
         controller -- iterator that yields True iff the loop should be run
             once more OR a callable that returns such an iterator
         blklist -- list of callables that form the loop body """
-        if not hasattr(controller, "next"):
+        if not hasattr(controller, "__next__"):
             if callable(controller):
                 controller = controller()
             else:
@@ -883,7 +883,7 @@ class LogoCode:
         #     return (name, True)
         else:
             # make sure '5' and '5.0' point to the same box
-            if isinstance(name, (basestring, int, long)):
+            if isinstance(name, (str, int)):
                 try:
                     name = float(name)
                 except ValueError:
@@ -916,7 +916,7 @@ class LogoCode:
             return name
         else:
             # make sure '5' and '5.0' point to the same action stack
-            if isinstance(name, (int, long, float)):
+            if isinstance(name, (int, float)):
                 if int(name) == name:
                     name = int(name)
                 else:
@@ -925,15 +925,16 @@ class LogoCode:
 
     def load_heap(self, obj):
         """ Load FILO from file """
-        user_path = _change_user_path(obj)
+        if not isinstance(obj, Media):
+            user_path = _change_user_path(obj)
 
         if self.tw.running_sugar:
             # Is the object a dsobject?
             if isinstance(obj, Media) and obj.value:
-                from sugar.datastore import datastore
+                from sugar3.datastore import datastore
                 try:
                     dsobject = datastore.get(obj.value)
-                except:
+                except BaseException:
                     debug_output("Couldn't find dsobject %s" %
                                  (obj.value), self.tw.running_sugar)
                 if dsobject is not None:
@@ -965,9 +966,9 @@ class LogoCode:
     def save_heap(self, obj):
         """ save FILO to file """
         if self.tw.running_sugar:
-            from sugar import profile
-            from sugar.datastore import datastore
-            from sugar.activity import activity
+            from sugar3 import profile
+            from sugar3.datastore import datastore
+            from sugar3.activity import activity
 
             # Save JSON-encoded heap to temporary file
             heap_file = os.path.join(get_path(activity, 'instance'),
@@ -1000,12 +1001,18 @@ class LogoCode:
         while self.heap:
             self.heap.pop()
 
+    def append_heap(self, arg):
+        self.heap.append(arg)
+
+    def pop_heap(self):
+        return self.heap.pop()
+
     def prim_myblock(self, *args):
         """ Run Python code imported from Journal """
         if self.bindex is not None and self.bindex in self.tw.myblock:
             try:
                 myfunc_import(self, self.tw.myblock[self.bindex], args)
-            except:
+            except BaseException:
                 raise logoerror("#syntaxerror")
 
     def prim_myfunction(self, f, *args):
@@ -1045,20 +1052,6 @@ class LogoCode:
         for name in value_blocks:
             self.update_label_value(name)
 
-    def int(self, n):
-        """ Raise an error if n doesn't convert to int. """
-        if isinstance(n, int):
-            return n
-        elif isinstance(n, float):
-            return int(n)
-        elif isinstance(n, str):
-            return int(ord(n[0]))
-        else:
-            self.tw.showblocks()
-            raise logoerror("%s %s %s %s" %
-                            (self.cfun.name, _("doesn't like"), str(n),
-                             _("as input")))
-
     def find_value_blocks(self):
         """ Find any value blocks that may need label updates """
         self.value_blocks_to_update = {}
@@ -1075,6 +1068,8 @@ class LogoCode:
             return
         self.tw.display_coordinates()
         if value is None:
+            if name not in self.value_blocks_to_update:
+                return
             for block in self.value_blocks_to_update[name]:
                 block.spr.set_label(block_names[name][0])
                 if name == 'box':
@@ -1095,6 +1090,8 @@ class LogoCode:
                     '.', self.tw.decimal_point)
             else:
                 valstring = str(value)
+            if name not in self.value_blocks_to_update:
+                return
             for block in self.value_blocks_to_update[name]:
                 if label is None:
                     block.spr.set_label(
@@ -1128,10 +1125,10 @@ class LogoCode:
         elif user_path is not None and os.path.exists(user_path):
             self.filepath = user_path
         elif self.tw.running_sugar:  # datastore object
-            from sugar.datastore import datastore
+            from sugar3.datastore import datastore
             try:
                 self.dsobject = datastore.get(obj.value)
-            except:
+            except BaseException:
                 debug_output("Couldn't find dsobject %s" %
                              (obj.value), self.tw.running_sugar)
             if self.dsobject is not None:
@@ -1143,9 +1140,9 @@ class LogoCode:
 
         pixbuf = None
         try:
-            pixbuf = gtk.gdk.pixbuf_new_from_file_at_size(
+            pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(
                 self.filepath, scale, scale)
-        except:
+        except BaseException:
             self.tw.showlabel('nojournal', self.filepath)
             debug_output("Couldn't open skin %s" % (self.filepath),
                          self.tw.running_sugar)
@@ -1169,11 +1166,14 @@ class LogoCode:
             data = image_to_base64(tmp_file, tmp_path)
             height = pixbuf.get_height()
             width = pixbuf.get_width()
-            event = 'R|%s' % (data_to_string([self.tw.nick,
-                                              [round_int(width),
-                                               round_int(height),
-                                               data]]))
-            gobject.idle_add(self.tw.send_event, event)
+            event = data_to_string(
+                [self.tw.nick, [round_int(width), round_int(height), data]])
+
+            def send_event(p):
+                self.tw.send_event('R', event)
+                return False
+
+            GLib.idle_add(send_event)
             os.remove(tmp_file)
 
     def get_from_url(self, url):
@@ -1182,12 +1182,12 @@ class LogoCode:
             url = "http://" + url  # assume HTTP
 
         try:
-            req = urllib2.urlopen(url)
-        except urllib2.HTTPError as e:
+            req = urllib.request.urlopen(url)
+        except urllib.error.HTTPError as e:
             debug_output("Couldn't open %s: %s" % (url, e),
                          self.tw.running_sugar)
             raise logoerror(url + ' [%d]' % (e.code))
-        except urllib2.URLError as e:
+        except urllib.error.URLError as e:
             if hasattr(e, 'code'):
                 debug_output("Couldn't open %s: %s" % (url, e),
                              self.tw.running_sugar)
@@ -1197,7 +1197,7 @@ class LogoCode:
                              self.tw.running_sugar)
                 raise logoerror('#noconnection')
 
-        mediatype = req.info().getheader('Content-Type')
+        mediatype = req.getheader('Content-Type')
         if mediatype[0:5] in ['image', 'audio', 'video']:
             tmp = tempfile.NamedTemporaryFile(delete=False)
             tmp.write(req.read())
@@ -1209,10 +1209,10 @@ class LogoCode:
 
     def showlist(self, objects):
         """ Display list of media objects """
-        x = (self.tw.turtles.get_active_turtle().get_xy()[0] /
-             self.tw.coord_scale)
-        y = (self.tw.turtles.get_active_turtle().get_xy()[1] /
-             self.tw.coord_scale)
+        x = (self.tw.turtles.get_active_turtle().get_xy(
+        )[0] / self.tw.coord_scale)
+        y = (self.tw.turtles.get_active_turtle().get_xy(
+        )[1] / self.tw.coord_scale)
         for obj in objects:
             self.tw.turtles.get_active_turtle().set_xy(x, y, pendown=False)
             self.show(obj)
@@ -1258,10 +1258,10 @@ class LogoCode:
                     elif text_media_type(self.filepath):
                         mediatype = 'text'
             elif self.tw.running_sugar:
-                from sugar.datastore import datastore
+                from sugar3.datastore import datastore
                 try:
                     self.dsobject = datastore.get(obj.value)
-                except:
+                except BaseException:
                     debug_output("Couldn't find dsobject %s" %
                                  (obj.value), self.tw.running_sugar)
 
@@ -1299,12 +1299,12 @@ class LogoCode:
             elif obj.type == 'descr' or mediatype == 'text':
                 mimetype = None
                 if self.dsobject is not None and \
-                   'mime_type' in self.dsobject.metadata:
+                        'mime_type' in self.dsobject.metadata:
                     mimetype = self.dsobject.metadata['mime_type']
 
                 description = None
                 if self.dsobject is not None and \
-                   'description' in self.dsobject.metadata:
+                        'description' in self.dsobject.metadata:
                     description = self.dsobject.metadata[
                         'description']
 
@@ -1313,7 +1313,7 @@ class LogoCode:
             if self.dsobject is not None:
                 self.dsobject.destroy()
 
-        elif isinstance(obj, (basestring, float, int)):  # text or number
+        elif isinstance(obj, (str, float, int)):  # text or number
             if isinstance(obj, (float, int)):
                 obj = round_int(obj)
 
@@ -1371,25 +1371,25 @@ class LogoCode:
         if pixbuf:  # We may have to rescale the picture
             if w != self.pixbuf.get_width() or h != self.pixbuf.get_height():
                 self.pixbuf = self.pixbuf.scale_simple(
-                    w, h, gtk.gdk.INTERP_BILINEAR)
+                    w, h, GdkPixbuf.InterpType.BILINEAR)
         elif self.dsobject is not None:
             try:
                 self.pixbuf = get_pixbuf_from_journal(self.dsobject, w, h)
-            except:
+            except BaseException:
                 debug_output("Couldn't open dsobject %s" % (self.dsobject),
                              self.tw.running_sugar)
         if self.pixbuf is None and \
-           self.filepath is not None and \
-           self.filepath != '':
+                self.filepath is not None and \
+                self.filepath != '':
             try:
                 if not resize:
-                    self.pixbuf = gtk.gdk.pixbuf_new_from_file(self.filepath)
+                    self.pixbuf = GdkPixbuf.Pixbuf.new_from_file(self.filepath)
                     w = self.pixbuf.get_width()
                     h = self.pixbuf.get_height()
                 else:
-                    self.pixbuf = gtk.gdk.pixbuf_new_from_file_at_size(
+                    self.pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(
                         self.filepath, w, h)
-            except:
+            except BaseException:
                 self.tw.showlabel('nojournal', self.filepath)
                 debug_output("Couldn't open filepath %s" % (self.filepath),
                              self.tw.running_sugar)
@@ -1423,9 +1423,9 @@ class LogoCode:
             return
         text = None
         if text_media_type(self.filepath):
-            if RTFPARSE and (
-                mimetype == 'application/rtf' or
-                    self.filepath.endswith(('rtf'))):
+            if RTFPARSE and \
+                    (mimetype == 'application/rtf' or self.filepath.endswith(
+                        'rtf')):
                 text_only = RtfTextOnly()
                 for line in open(self.filepath, 'r'):
                     text_only.feed(line)
@@ -1452,7 +1452,7 @@ class LogoCode:
         """ Wait for media to stop playing """
         if self.tw.gst_available:
             from .tagplay import media_playing
-            while(media_playing(self)):
+            while (media_playing(self)):
                 yield True
         self.ireturn()
         yield True
@@ -1557,8 +1557,8 @@ class LogoCode:
         box_blk.connections.append(b.connections[0])
         if b.connections[0] is not None:
             for i in range(len(b.connections[0].connections)):
-              if b.connections[0].connections[i] == b:
-                  b.connections[0].connections[i] = box_blk
+                if b.connections[0].connections[i] == b:
+                    b.connections[0].connections[i] = box_blk
         box_blk.docks.append(['number', True, 0, 0])
         box_blk.connections.append(box_label_blk)
         box_blk.docks.append(['string', False, 0, 0])

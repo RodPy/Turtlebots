@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 # Copyright (c) 2011 Collabora Ltd. <http://www.collabora.co.uk/>
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -15,7 +15,7 @@
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 # Boston, MA 02111-1307, USA.
 
-import gtk
+from gi.repository import Gtk
 
 MENUBAR = {}
 
@@ -26,17 +26,19 @@ def get_sub_menu_by_name(name):
     else:
         return None
 
+
 def make_sub_menu(menu, name):
     """ add a new submenu to the toolbar """
-    sub_menu = gtk.MenuItem(name)
+    sub_menu = Gtk.MenuItem(name)
     MENUBAR[name] = [menu, sub_menu]  # Maintain a dictionary
     sub_menu.show()
     sub_menu.set_submenu(menu)
     return sub_menu
 
+
 def make_menu_item(menu, tooltip, callback, arg=None):
     """ add a new item to the submenu """
-    menu_items = gtk.MenuItem(tooltip)
+    menu_items = Gtk.MenuItem(tooltip)
     menu.append(menu_items)
     if arg is None:
         menu_items.connect('activate', callback)
@@ -44,15 +46,15 @@ def make_menu_item(menu, tooltip, callback, arg=None):
         menu_items.connect('activate', callback, arg)
     menu_items.show()
 
+
 def make_checkmenu_item(menu, tooltip, callback, status=True,
                         arg=None):
-    menu_items = gtk.CheckMenuItem(tooltip)
+    menu_items = Gtk.CheckMenuItem(tooltip)
     menu_items.set_active(status)
     menu.append(menu_items)
     if arg is None:
         menu_items.connect('activate', callback)
     else:
         menu_items.connect('activate', callback, arg)
-    #menu_items.show()
+    # menu_items.show()
     return menu_items
-

@@ -1,9 +1,9 @@
 [Activity]
 name = TurtleBots
-activity_version = 31
+activity_version = 31.1
 license = MIT
 bundle_id = org.laptop.TurtleArtButia
-exec = sugar-activity TurtleArtActivity.TurtleArtActivity
+exec = sugar-activity3 TurtleArtActivity.TurtleArtActivity
 icon = turtlebots
 show_launcher = yes
 website = http://www.fing.edu.uy/inco/proyectos/butia

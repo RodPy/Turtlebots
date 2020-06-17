@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright (C) 2008 Eben Eliason
 # Copyright (C) 2013 Jorge Alberto Gómez López
@@ -74,7 +74,7 @@ class SugarIconify():
 
     def usage(self):
         # Define help output
-        print HELP
+        print(HELP)
 
     def _parse_command_line(self):
         ''' Try to make sense of the command-line arguments. '''
@@ -82,7 +82,7 @@ class SugarIconify():
             opts, arg = getopt.getopt(sys.argv[1:], 's:f:gcd:imp:oehvx',
                                       ['stroke=', 'fill=', 'guess', 'help',
                                        'overwrite', 'verbose'])
-        except:
+        except BaseException:
             self.usage()
             sys.exit(2)
 
@@ -199,13 +199,13 @@ class SugarIconify():
         # Load the SVG as text
         try:
             self.svgfile = open(self.svgfilepath, 'r')
-        except:
+        except BaseException:
             sys.exit('Error: Could not locate ' + self.svgfilepath)
 
         try:
             self.svgtext = self.svgfile.read()
             self.svgfile.close()
-        except:
+        except BaseException:
             self.svgfile.close()
             sys.exit('Error: Could not read ' + self.svgfilepath)
 
@@ -219,7 +219,7 @@ class SugarIconify():
             self.creator = 'inkscape'
 
         if self.verbose:
-            print 'The self.creator of this svg is ' + self.creator + '.'
+            print('The self.creator of this svg is ' + self.creator + '.')
 
         # Hack the entities into the readonly DTD
         if self.use_entities:
@@ -241,16 +241,16 @@ class SugarIconify():
 
             # Define the entities
             if self.fill_match and self.stroke_match:
-                self.entities  = '\t<!ENTITY ' + self.stroke_entity + ' "' + \
-                                 self.stroke_color + '">\n'
+                self.entities = '\t<!ENTITY ' + self.stroke_entity + ' "' + \
+                    self.stroke_color + '">\n'
                 self.entities += '\t<!ENTITY ' + self.fill_entity + ' "' + \
                                  self.fill_color + '">\n'
                 if self.use_iso_strokes:
                     self.entities += '\t<!ENTITY ' + self.iso_stroke_entity + \
                                      ' "' + self.stroke_color + '">\n'
             else:
-                self.entities  = '\t<!ENTITY ' + self.stroke_entity + ' "' + \
-                                 self.default_stroke_color + '">\n'
+                self.entities = '\t<!ENTITY ' + self.stroke_entity + ' "' + \
+                    self.default_stroke_color + '">\n'
                 self.entities += '\t<!ENTITY ' + self.fill_entity + ' "' + \
                                  self.default_fill_color + '">\n'
                 if self.use_iso_strokes:
@@ -308,21 +308,21 @@ class SugarIconify():
         self.h = self.svg.getAttribute('height')
 
         if self.w != '55px' or self.h != '55px':
-            print 'Warning: invalid canvas size (%s, %s); \
-Should be (55px, 55px)' % (self.w, self.h)
+            print('Warning: invalid canvas size (%s, %s); \
+Should be (55px, 55px)' % (self.w, self.h))
 
         # Guess the entity values, if they aren't passed in
         if self.use_entities:
-            print 'entities_passed ==', self.entities_passed
+            print('entities_passed ==', self.entities_passed)
 
             if self.entities_passed < 2:
                 self.stroke_color, self.fill_color = \
                     self.guessEntities(self.svg)
 
             if self.confirm_guess or self.verbose:
-                print '\nentity definitions:'
-                print '     self.stroke_entity = ' + self.stroke_color
-                print '     self.fill_entity = ' + self.fill_color
+                print('\nentity definitions:')
+                print('     self.stroke_entity = ' + self.stroke_color)
+                print('     self.fill_entity = ' + self.fill_color)
 
             '''if self.entities_passed < 2:
                 if self.confirm_guess:
@@ -471,7 +471,7 @@ Should be (55px, 55px)' % (self.w, self.h)
                             else:
                                 icon_name = icon.attributes.getNamedItem(
                                     'id').nodeValue
-                        except:
+                        except BaseException:
                             pass
 
                         # Skip the template layers
@@ -482,8 +482,8 @@ Should be (55px, 55px)' % (self.w, self.h)
                                re.search(self.pattern, icon_name):
 
                                 if self.verbose:
-                                    print '\nExporting ' + icon_name + \
-                                        '.self.svg...'
+                                    print('\nExporting ' + icon_name + \
+                                        '.self.svg...')
                                 icon_xml = xml.dom.minidom.Document()
 
                                 # Construct the self.svg
@@ -496,14 +496,15 @@ Should be (55px, 55px)' % (self.w, self.h)
 
                                 if self.use_entities:
                                     strokes_replaced, fills_replaced = \
-                                        self.replaceEntities(icon_xml.childNodes[1])
+                                        self.replaceEntities(
+                                            icon_xml.childNodes[1])
 
                                     if not strokes_replaced and not fills_replaced:
-                                        print 'Warning: no entity replacements were made in %s' % icon_name
+                                        print('Warning: no entity replacements were made in %s' % icon_name)
                                     elif not strokes_replaced:
-                                        print 'Warning: no stroke entity replacements were made in %s' % icon_name
+                                        print('Warning: no stroke entity replacements were made in %s' % icon_name)
                                     elif not fills_replaced:
-                                        print 'Warning: no fill entity replacements were made in %s' % icon_name
+                                        print('Warning: no fill entity replacements were made in %s' % icon_name)
 
                                     if not strokes_replaced or not fills_replaced:
                                         n_warnings += 1
@@ -512,7 +513,7 @@ Should be (55px, 55px)' % (self.w, self.h)
                                 try:
                                     f = open(self.output_path + icon_name +
                                              '.self.svg', 'w')
-                                except:
+                                except BaseException:
                                     sys.exit(
                                         'Error: Could not locate directory ' +
                                         self.output_path)
@@ -531,8 +532,7 @@ Should be (55px, 55px)' % (self.w, self.h)
                                         icon_svgtext = re.sub(
                                             r'ENTITY self.stroke_color "[^"]*"',
                                             r'ENTITY self.stroke_color "' +
-                                            self.stroke_color +
-                                            '"',
+                                            self.stroke_color + '"',
                                             icon_svgtext)
                                         icon_svgtext = re.sub(
                                             r'ENTITY self.fill_color "[^"]*"',
@@ -542,30 +542,30 @@ Should be (55px, 55px)' % (self.w, self.h)
                                             icon_svgtext)
                                     f.write(icon_svgtext)
                                     f.close()
-                                except:
+                                except BaseException:
                                     sys.exit(
                                         'Error: Could not write file ' +
                                         icon_name +
                                         '.self.svg')
 
                                 n_icons_exported += 1
-                except:
+                except BaseException:
                     # Catch any errors we may have missed, so the rest
                     # of the icons can export normally
                     if(icon_name):
-                        print 'Error: Could not export' + icon_name + \
-                            '.self.svg'
+                        print('Error: Could not export' + icon_name + \
+                            '.self.svg')
 
             if self.verbose:
                 if n_icons_exported == 1:
-                    print 'Successfully exported 1 icon'
+                    print('Successfully exported 1 icon')
                 else:
-                    print 'Successfully exported %d icons' % n_icons_exported
+                    print('Successfully exported %d icons' % n_icons_exported)
 
                 if n_warnings == 1:
-                    print 'Warnings were reported for 1 icon'
+                    print('Warnings were reported for 1 icon')
                 elif n_warnings > 1:
-                    print 'Warnings were reported for %d icons' % n_warnings
+                    print('Warnings were reported for %d icons' % n_warnings)
 
         else:
             # Output a single converted icon
@@ -573,11 +573,11 @@ Should be (55px, 55px)' % (self.w, self.h)
                 outfilename = re.sub(r'(.*\.)([^.]+)', r'\1sugar.\2',
                                      self.svgfilename)
                 if self.verbose:
-                    print 'Exporting ' + outfilename + ' ...'
+                    print('Exporting ' + outfilename + ' ...')
             else:
                 outfilename = self.svgfilename
                 if self.verbose:
-                    print 'Overwriting ' + outfilename + ' ...'
+                    print('Overwriting ' + outfilename + ' ...')
 
             # Remove the template layers
             for node in self.svg.childNodes:
@@ -595,23 +595,23 @@ Should be (55px, 55px)' % (self.w, self.h)
 
                         if node_name.startswith('_'):
                             node.parentNode.removeChild(node)
-                    except:
+                    except BaseException:
                         pass
 
             if self.use_entities:
                 strokes_replaced, fills_replaced = \
                     self.replaceEntities(self.svgxml)
                 if not strokes_replaced and not fills_replaced:
-                    print 'Warning: no entity replacements were made'
+                    print('Warning: no entity replacements were made')
                 elif not strokes_replaced:
-                    print 'Warning: no stroke entity replacements were made'
+                    print('Warning: no stroke entity replacements were made')
                 elif not fills_replaced:
-                    print 'Warning: no fill entity replacements were made'
+                    print('Warning: no fill entity replacements were made')
 
                 if self.use_iso_strokes:
                     strokes_fixed = self.fix_isolated_strokes(self.svgxml)
                     if strokes_fixed > 0 and self.verbose:
-                        print "%d isolated strokes fixed" % strokes_fixed
+                        print("%d isolated strokes fixed" % strokes_fixed)
 
             # Create the output file(s)
             if self.output_examples:
@@ -621,18 +621,18 @@ Should be (55px, 55px)' % (self.w, self.h)
                            self.svgfilename) + '/'
                 try:
                     os.mkdir(example_path)
-                except:
+                except BaseException:
                     pass
 
                 try:
                     f = open(example_path + 'preview.html', 'w')
-                except:
-                    print "Error: could not create HTML preview file"
+                except BaseException:
+                    print("Error: could not create HTML preview file")
 
                 try:
                     f.write(re.sub(r'~~~', svgbasename, self.previewHTML))
                     f.close()
-                except:
+                except BaseException:
                     sys.exit('Error: could not write to HTML preview file')
 
                 example_colors = [(self.default_stroke_color, '#FFFFFF',
@@ -653,7 +653,7 @@ Should be (55px, 55px)' % (self.w, self.h)
                 for i in range(0, len(example_filenames)):
                     try:
                         f = open(example_path + example_filenames[i], 'w')
-                    except:
+                    except BaseException:
                         sys.exit('Error: Could not save to ' + example_path +
                                  example_filenames[i])
                     try:
@@ -678,13 +678,13 @@ Should be (55px, 55px)' % (self.w, self.h)
                                 icon_svgtext)
                         f.write(icon_svgtext)
                         f.close()
-                    except:
+                    except BaseException:
                         sys.exit('Error: Could not write file ' +
                                  self.output_path + example_filenames[i])
 
             try:
                 f = open(self.output_path + outfilename, 'w')
-            except:
+            except BaseException:
                 sys.exit('Error: Could not save to ' + self.output_path +
                          outfilename)
 
@@ -714,7 +714,7 @@ Should be (55px, 55px)' % (self.w, self.h)
                 f.write(icon_svgtext)
                 f.close()
 
-            except:
+            except BaseException:
                 sys.exit('Error: Could not write file ' + self.output_path +
                          outfilename)
 
@@ -813,7 +813,7 @@ Should be (55px, 55px)' % (self.w, self.h)
             str = str + " (" + self.getStroke(node) + ", " + \
                 self.getFill(node) + ")"
             if self.verbose:
-                print str
+                print(str)
 
         # Recurse on DOM
         for n in node.childNodes:
@@ -860,7 +860,7 @@ Should be (55px, 55px)' % (self.w, self.h)
                         'inkscape:label').nodeValue
                 else:
                     node_name = node.attributes.getNamedItem('id').nodeValue
-            except:
+            except BaseException:
                 pass
 
             # Skip the template layers
